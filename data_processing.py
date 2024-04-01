@@ -1,6 +1,6 @@
 import pandas as pd
 
-df = pd.read_csv("CforAZ_Data_Analytics\CFAZ Modeling Data.csv")
+df = pd.read_csv("CFAZ Modeling Data.csv")
 
 #get rid of useless irrelevant weak ugly column "VANID"
 df.drop(columns=['VANID'], inplace=True)
@@ -40,5 +40,29 @@ ethnicity_dummies = pd.get_dummies(df['Ethnicity'], prefix='Ethnicity')
 # Concatenate these new one-hot encoded columns with the original DataFrame
 df_with_dummies = pd.concat([df, gender_dummies], axis=1)
 df_with_dummies = pd.concat([df_with_dummies, ethnicity_dummies], axis=1)
+
+for col in df_with_dummies.columns:
+    if "Ethnicity_" in col:
+        newCol = col.split(" ")
+        print(newCol)
+        newCol = newCol[2]
+        df_with_dummies = df_with_dummies.rename(columns={col: newCol})
+
+ethnicConversions = {"afam": "isAfam", "chinese": "isAsian", "korean": "isAsian",
+                     "indian": "isAsian", "iranian": "isAsian", "japanese": "isAsian",
+                     "muslim": "isAsian", "white": "isWhite", "greek": "isWhite",
+                     "italian": "isWhite", "irish": "isIrish", "jewish": "isJewish",
+                     "latinx": "isLatinx"}
+
+
+for col in df_with_dummies.columns:
+    if ord(col[0]) >= 97:
+        print(col + ": " + str(df_with_dummies[col].sum()))
+
+        ethnicConversions[col] =
+
+
+
 # Display the modified DataFrame columns to verify the new structure with dummies
 print(df_with_dummies.columns)
+print(df_with_dummies.head())
