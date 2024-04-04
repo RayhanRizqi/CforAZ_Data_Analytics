@@ -1,7 +1,8 @@
 import pandas as pd
 import re
+from datetime import datetime
 
-df = pd.read_csv("CFAZ Modeling Data.csv")
+df = pd.read_csv("CforAZ_Data_Analytics\CFAZ Modeling Data.csv")
 
 # get rid of useless irrelevant weak ugly column "VANID"
 df.drop(columns=['VANID'], inplace=True)
@@ -13,7 +14,7 @@ df.drop(columns=['Giving History'], inplace=True)
 
 # add columns about previous gives
 df['Max Give'] = 0
-df['Most Recent Give Time'] = 0
+df['Months Since Last Donation'] = 0
 df['Most Recent Give Amount'] = 0
 df['Number of Gives'] = 0
 
@@ -104,11 +105,15 @@ df_with_dummies.drop(columns=['Ethnicity'], inplace=True)
 # print(df_with_dummies["Bio Contributions"])
 count = 0
 
-# Gets Max Give
-maxGive = 0
 for i in range(len(df_with_dummies)):
     wordString = df_with_dummies.iloc[i]["Bio Contributions"].split("   ")
+    
+    # Reset Max Give
+    maxGive = 0
 
+    # Reset months_since_donation
+    months_since_donation = -1
+    
     # handles if the row start with 
     if (wordString[0] == "--------- all_contributions:"):
         # removes the prefix "---- all contributions:"
@@ -117,11 +122,28 @@ for i in range(len(df_with_dummies)):
         # gets rid of leading & trailing white spaces & removes empty strings form lists, cuz for some reason they have empty strings
         donations = [item for item in [item.strip() for item in donations] if item]
 
+        
+
         # get the list of all the numbers in the middle of the donation, then get the max of all of them
         maxGive = int(max([float(s.split(' - ')[1]) for s in donations]))
 
         # set the max Give in the df coluns "Max Give"
         df_with_dummies.at[i, "Max Give"] = maxGive
+
+
+        # Get dates for every donation
+        donation_dates = [datetime.strptime(date.split(' - ')[0], "%Y-%m-%d %H:%M:%S") for date in donations]
+
+        # Most recent date
+        most_recent_dono = max(donation_dates)
+
+        # Current Date
+        current_date = datetime.now()
+
+        # How long its been since last donation (in months)
+        months_since_donation = (current_date.year - most_recent_dono.year) * 12 + (current_date.month - most_recent_dono.month)
+
+        df_with_dummies.at[i, "Months Since Last Donation"] = months_since_donation
     else:
         sections = ''.join(wordString)
 
@@ -147,12 +169,44 @@ for i in range(len(df_with_dummies)):
                 #removes empty strings
                 donation = [item for item in donation if item]
 
-                #if it includes donation amount
+                # if it includes donation amount, get the donation amount
                 if len(donation) == 3:
                     # Sometimes in place of the donation amount, its replaced by a uppercase character, so this takes it into account
                     try:
                         maxGive = max(maxGive, int(donation[len(donation)-1]))
                     except ValueError:
                         continue
-        # now that we have the max value, set it in the dataframe at column "Max Give"
+                
+                # month abbreviation to number
+                month_to_num = {
+                    'jan': 1, 'feb': 2, 'mar': 3, 'apr': 4, 'may': 5, 'jun': 6,
+                    'jul': 7, 'aug': 8, 'sep': 9, 'oct': 10, 'nov': 11, 'dec': 12
+                }
+
+                # month and year of the donation
+                month_abbr = donation[0][:3]
+                year = int(donation[0][3:])
+
+                # convert the month string to int
+                month_num = month_to_num[month_abbr.lower()]
+
+                # date object
+                date_object = datetime(year, month_num, 1)
+
+            # Keep track of most recent donation onject
+            if (most_recent_dono == -1):
+                most_recent_dono = date_object
+            # check if the date is most recent
+            most_recent_dono = max(date_object, most_recent_dono)
+
+        # now that we have the max dono value, set it in the dataframe at column "Max Give"
         df_with_dummies.at[i, "Max Give"] = maxGive
+
+        # current date
+        current_date = datetime.now()
+
+        # How long its been since last donation (in months)
+        months_since_donation = (current_date.year - most_recent_dono.year) * 12 + (current_date.month - most_recent_dono.month)
+
+        # set most_recent_dono into the dataframe
+        df_with_dummies.at[i, "Months Since Last Donation"] = months_since_donation
