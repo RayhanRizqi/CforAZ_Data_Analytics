@@ -17,6 +17,7 @@ df['Max Give'] = 0
 df['Months Since Last Donation'] = 0
 df['Most Recent Give Amount'] = 0
 df['Number of Gives'] = 0
+df['Average Give Amount'] = 0
 
 # Adjust the process_string_corrected function to specifically extract Gender, Ethnicity, and Networth
 def extract_bio_details(bio_string):
@@ -114,7 +115,7 @@ for i in range(len(df_with_dummies)):
     # Reset months_since_donation
     months_since_donation = -1
     
-    # handles if the row start with 
+    # handles if the row start with "--------- all_contributions:"
     if (wordString[0] == "--------- all_contributions:"):
         # removes the prefix "---- all contributions:"
         donations = wordString[1:]
@@ -131,6 +132,12 @@ for i in range(len(df_with_dummies)):
         df_with_dummies.at[i, "Max Give"] = maxGive
 
 
+        # get the amount of the latest give
+        most_recent_dono_amount = int(float(donations[len(donations)-1].split(' - ')[1]))
+
+        # set most recent dono amount in "Most Recent Give Amount"
+        df_with_dummies.at[i, "Most Recent Give Amount"] = most_recent_dono_amount
+
         # Get dates for every donation
         donation_dates = [datetime.strptime(date.split(' - ')[0], "%Y-%m-%d %H:%M:%S") for date in donations]
 
@@ -144,69 +151,87 @@ for i in range(len(df_with_dummies)):
         months_since_donation = (current_date.year - most_recent_dono.year) * 12 + (current_date.month - most_recent_dono.month)
 
         df_with_dummies.at[i, "Months Since Last Donation"] = months_since_donation
+        # print(donations)
+
+        # setting the amount of donations in df under column "Number of Gives"
+        df_with_dummies.at[i, "Number of Gives"] = len(donations)
     else:
         sections = ''.join(wordString)
+
+        # I'm doing the most recent donation amount outside the while loop bc regular expression is crazy good
+        pattern = r'\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\d{4} [^\d,]+ (\d+)'
 
         # Split the sections by the "---------" delimiter
         sections = [item for item in [item.strip() for item in sections.split("---------")] if item]
         
+        modified_sections = ""
+
         # section = "Most recent ...", "Presidential", "Issue", "Most recent House"
         for section in sections:
             # Dont include the presidential donations
             if "Presidential" in section:
                 continue
+            modified_sections = modified_sections + section
 
-            # Gets rid of the "Most recent ..." header and splits into list of donations in the section
-            section = [item for item in ''.join(section.split("\n")[1:]).split(", ") if item]
-            section = [item for item in section if item != ","]
+        # Getting individual donations using regex because regex is live laugh love                           
+        pattern = r'\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\d{4} [^\d,]+ (\d+)'
 
-            # gets max dono amount
-            for donation in section:
-                # splits by empty strings and ","
-                pattern = r'[ ,]+'
-                donation = re.split(pattern, donation)
+        # Find all matches of the pattern in the text
+        donations = re.findall(pattern, modified_sections)
 
-                #removes empty strings
-                donation = [item for item in donation if item]
+        # Finds all the donation amounts in the text
+        donation_amounts = [int(donation) for donation in donations]
 
-                # if it includes donation amount, get the donation amount
-                if len(donation) == 3:
-                    # Sometimes in place of the donation amount, its replaced by a uppercase character, so this takes it into account
-                    try:
-                        maxGive = max(maxGive, int(donation[len(donation)-1]))
-                    except ValueError:
-                        continue
-                
-                # month abbreviation to number
-                month_to_num = {
-                    'jan': 1, 'feb': 2, 'mar': 3, 'apr': 4, 'may': 5, 'jun': 6,
-                    'jul': 7, 'aug': 8, 'sep': 9, 'oct': 10, 'nov': 11, 'dec': 12
-                }
+        # Most recent donation
+        most_recent_donation_amount = donation_amounts[-1] if donation_amounts else None
 
-                # month and year of the donation
-                month_abbr = donation[0][:3]
-                year = int(donation[0][3:])
+        # Sets most recent donation in df in column "Most Recent Give Amount"
+        df_with_dummies.at[i, "Most Recent Give Amount"] = most_recent_donation_amount
 
-                # convert the month string to int
-                month_num = month_to_num[month_abbr.lower()]
 
-                # date object
-                date_object = datetime(year, month_num, 1)
+        # Getting Max Dono Amount
+        max_donation_amount = max(donation_amounts)
 
-            # Keep track of most recent donation onject
-            if (most_recent_dono == -1):
-                most_recent_dono = date_object
-            # check if the date is most recent
-            most_recent_dono = max(date_object, most_recent_dono)
+        # Setting Max Dono Amount at df in column "Max Give"
+        df_with_dummies.at[i, "Max Give"] = max_donation_amount
 
-        # now that we have the max dono value, set it in the dataframe at column "Max Give"
-        df_with_dummies.at[i, "Max Give"] = maxGive
+
+        # Pattern captures the month and the amount
+        pattern_with_month = r'\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)(\d{4}) [^\d,]+ (\d+)'
+
+        # Find all matches of the pattern in section
+        matches_with_month = re.findall(pattern_with_month, modified_sections)
+
+        # Converting matches to list of tuples with month, year, and amount
+        donation_details = [(match[0], int(match[1]), int(match[2])) for match in matches_with_month]
+
+        # Month to int conversion dictionary
+        month_to_int = {
+            'jan': 1, 'feb': 2, 'mar': 3, 'apr': 4, 'may': 5, 'jun': 6,
+            'jul': 7, 'aug': 8, 'sep': 9, 'oct': 10, 'nov': 11, 'dec': 12
+        }
+
+        # Adjust the donation_details list to convert the month abbreviation to an integer
+        donation_details_int_month = [(month_to_int[match[0]], match[1], match[2]) for match in donation_details]
+
+        # Most recent donation details
+        most_recent_donation_details = donation_details_int_month[-1]
 
         # current date
         current_date = datetime.now()
+
+        # most recent donation date in datetime object
+        donation_date = datetime(most_recent_donation_details[1], most_recent_donation_details[0], 1)
 
         # How long its been since last donation (in months)
         months_since_donation = (current_date.year - most_recent_dono.year) * 12 + (current_date.month - most_recent_dono.month)
 
         # set most_recent_dono into the dataframe
         df_with_dummies.at[i, "Months Since Last Donation"] = months_since_donation
+
+
+        # Setting the length of donation detail as number of donations
+        df_with_dummies.at[i, "Number of Gives"] = len(donation_details)
+# print(df_with_dummies["Most Recent Give Amount"])
+print(df[df_with_dummies["Number of Gives"] == 0])
+# print(df_with_dummies.at[190, "Bio Contributions"])
