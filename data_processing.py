@@ -131,6 +131,11 @@ for i in range(len(df_with_dummies)):
         # set the max Give in the df coluns "Max Give"
         df_with_dummies.at[i, "Max Give"] = maxGive
 
+        donation_amounts = [float(s.split(' - ')[1]) for s in donations]
+
+        # Set average give in df at column "Average Give Amount"
+        df_with_dummies.at[i, "Average Give Amount"] = sum(donation_amounts) / len(donation_amounts)
+
 
         # get the amount of the latest give
         most_recent_dono_amount = int(float(donations[len(donations)-1].split(' - ')[1]))
@@ -195,6 +200,9 @@ for i in range(len(df_with_dummies)):
         # Setting Max Dono Amount at df in column "Max Give"
         df_with_dummies.at[i, "Max Give"] = max_donation_amount
 
+        # Setting the average of the donation amounts in df in column "Average Give Amount"
+        df_with_dummies.at[i, "Average Give Amount"] = sum(donation_amounts) / len(donation_amounts)
+
 
         # Pattern captures the month and the amount
         pattern_with_month = r'\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)(\d{4}) [^\d,]+ (\d+)'
@@ -233,5 +241,5 @@ for i in range(len(df_with_dummies)):
         # Setting the length of donation detail as number of donations
         df_with_dummies.at[i, "Number of Gives"] = len(donation_details)
 # print(df_with_dummies["Most Recent Give Amount"])
-print(df[df_with_dummies["Number of Gives"] == 0])
+print(df[df_with_dummies["Average Give Amount"] == 0])
 # print(df_with_dummies.at[190, "Bio Contributions"])
