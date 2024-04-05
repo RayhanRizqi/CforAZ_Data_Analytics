@@ -270,14 +270,29 @@ for i in range(len(df_with_dummies)):
             df_with_dummies.at[i, reason] = 1
 
 
-df_with_dummies["New Networth"] = df_with_dummies["Networth"] / 10000
-df_with_dummies["New Networth"].hist(bins = 30)
-# plt.xscale('log')
+
+df_with_dummies["Networth 10k-100k"] = 0
+df_with_dummies["Networth 100k-1M"] = 0
+df_with_dummies["Networth 1M-10M"] = 0
+df_with_dummies["Networth 10M-100M"] = 0
+
+for i in range(len(df_with_dummies)):
+    networthNum = df_with_dummies.at[i, "Networth"]
+    if 10000 <= networthNum < 100000:
+        df_with_dummies.at[i, "Networth 10k-100k"] = 1
+    if 100000 <= networthNum < 1000000:
+        df_with_dummies.at[i, "Networth 100k-1M"] = 1
+    if 1000000 <= networthNum < 10000000:
+        df_with_dummies.at[i, "Networth 1M-10M"] = 1
+    if 10000000 <= networthNum < 100000000:
+        df_with_dummies.at[i, "Networth 10M-100M"] = 1
+
+
+columns_to_keep = ['Networth 10k-100k', 'Networth 100k-1M', 'Networth 1M-10M', 'Networth 10M-100M']
+column_sums = df_with_dummies[columns_to_keep].sum()
+column_sums.plot(kind='bar')
 
 plt.show()
-
-
-
 
 
 
@@ -293,7 +308,7 @@ plt.show()
 # plt.xticks(rotation=45)  # Optional: Rotate the x-axis labels for better readability
 # plt.show()
 
-df_with_dummies = df_with_dummies.drop(['Zip', 'Giving Summary', 'Bio Contributions', 'New Networth'], axis=1)
+df_with_dummies = df_with_dummies.drop(['Zip', 'Giving Summary', 'Bio Contributions', 'Networth'], axis=1)
 
 exported_csv_filename = 'processed_CFAZ Modeling Data.csv'
 df_with_dummies.to_csv(exported_csv_filename, index=True)
