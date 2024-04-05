@@ -3,7 +3,7 @@ import re
 from datetime import datetime
 import matplotlib.pyplot as plt
 
-df = pd.read_csv("CforAZ_Data_Analytics\CFAZ Modeling Data.csv")
+df = pd.read_csv("CFAZ Modeling Data.csv")
 
 # get rid of useless irrelevant weak ugly column "VANID"
 df.drop(columns=['VANID'], inplace=True)
@@ -57,28 +57,17 @@ df.drop(columns=['Bio'], inplace=True)
 
 # Apply get_dummies to "Gender" and "Ethnicity" columns to create one-hot encoded columns
 gender_dummies = pd.get_dummies(df['Gender'], prefix='Gender')
-ethnicity_dummies = pd.get_dummies(df['Ethnicity'], prefix='Ethnicity')
+# ethnicity_dummies = pd.get_dummies(df['Ethnicity'], prefix='Ethnicity')
 
 # Concatenate these new one-hot encoded columns with the original DataFrame
 df_with_dummies = pd.concat([df, gender_dummies], axis=1)
-df_with_dummies = pd.concat([df_with_dummies, ethnicity_dummies], axis=1)
+# df_with_dummies = pd.concat([df_with_dummies, ethnicity_dummies], axis=1)
 
 # Prettiy Gender columns
 for col in df_with_dummies.columns:
     if "Gender_" in col:
         newCol = col.split("_")
         df_with_dummies = df_with_dummies.rename(columns={col: newCol[1]})
-
-# Prettify Ethnicity columns
-for col in df_with_dummies.columns:
-    if "Ethnicity_" in col:
-        newCol = col.split(" ")
-        if newCol == "unsure":
-            newCol[2] = "ethnicity unsure"
-        df_with_dummies = df_with_dummies.rename(columns={col: newCol[2]})
-
-
-ethnicColumns = ["afam", "chinese", "korean", "indian", "iranian", "japanese", "muslim", "white", "greek", "italian", "irish", "jewish", "latinx"]
 
 # very questionable variable name, might as well call it ethnic Cleansing table
 ethnicConversions = {"afam": "isAfam", "chinese": "isAsian", "korean": "isAsian",
@@ -87,24 +76,33 @@ ethnicConversions = {"afam": "isAfam", "chinese": "isAsian", "korean": "isAsian"
                      "italian": "isWhite", "irish": "isIrish", "jewish": "isJewish",
                      "latinx": "isLatinx"}
 
-for original, new in ethnicConversions.items():
-    if new not in df_with_dummies.columns:
-        df_with_dummies[new] = 0
-    # df_with_dummies[new] = df_with_dummies.apply(lambda row: 1 if row[original] == 1 or row[new] == 1 else 0, axis=1)
-    # df_with_dummies = df_with_dummies.drop(columns={original})
+# Strips the "likely" and "american" in Ethnicity column
+df_with_dummies['Ethnicity'] = df_with_dummies['Ethnicity'].apply(lambda row: row.strip().split(" ")[1])
 
-for i in range(len(df)):
-    ethnicity = df_with_dummies["Ethnicity"]
-    if "/" in ethnicity:
+# It creates a column for every grouped ethnicity 
+for value in set(ethnicConversions.values()):
+    # Create a new column for each unique value
+    if value not in df_with_dummies.columns:
+        df_with_dummies[value] = 0
+
+# add another column for "ethnicity unsure"
+df_with_dummies["Ethnicity unsure"] = 0
+
+# One hot encoding grouped ethnicities
+for i in range(len(df_with_dummies)):
+    ethnicity = df_with_dummies.at[i, "Ethnicity"]
+
+    # if gender unsure, leave 
+    if ethnicity == "unsure":
+        df_with_dummies.at[i, "Ethnicity unsure"] = 1
         continue
+    if "/" in ethnicity:
+        ethnicities = ethnicity.split('/')
+        for eth in ethnicities:
+            df_with_dummies.at[i, ethnicConversions[eth]] = 1
+        continue
+        
     df_with_dummies.at[i, ethnicConversions[ethnicity]] = 1
-
-# handling multi ethnic people
-for col in df_with_dummies:
-    if "/" in col:
-        for eth in col.split("/"):
-            df_with_dummies[ethnicConversions[eth]] = 1
-        df_with_dummies = df_with_dummies.drop(columns={col})
 
 # Getting rid of initial Gender and Ethnicity columns
 df_with_dummies.drop(columns=['Gender'], inplace=True)
@@ -288,7 +286,7 @@ for i in range(len(df_with_dummies)):
 # print(len(df_with_dummies[df_with_dummies["isLatinx"] == 1]))
 
 columns_to_keep = ['isAfam', 'isAsian', 'isWhite', 'isIrish', 'isJewish',
-       'isLatinx']
+       'isLatinx', 'Ethnicity unsure']
 column_sums = df_with_dummies[columns_to_keep].sum()
 
 column_sums.plot(kind='bar')
