@@ -1,6 +1,7 @@
 import pandas as pd
 import re
 from datetime import datetime
+import matplotlib.pyplot as plt
 
 df = pd.read_csv("CforAZ_Data_Analytics\CFAZ Modeling Data.csv")
 
@@ -18,6 +19,17 @@ df['Months Since Last Donation'] = 0
 df['Most Recent Give Amount'] = 0
 df['Number of Gives'] = 0
 df['Average Give Amount'] = 0
+
+# Columns for reasons for Conor to give in list
+reason_to_give = [
+    "strong envir support", "very pro-gun control", "dems in red seats",
+    "house races", "gives in primaries", "supports AZ campaigns", "strong pp support",
+    "moderate dems"
+    ]
+
+# Convert reasons_to_give into columns in the df
+for item in reason_to_give:
+    df[item] = 0
 
 # Adjust the process_string_corrected function to specifically extract Gender, Ethnicity, and Networth
 def extract_bio_details(bio_string):
@@ -61,6 +73,8 @@ for col in df_with_dummies.columns:
 for col in df_with_dummies.columns:
     if "Ethnicity_" in col:
         newCol = col.split(" ")
+        if newCol == "unsure":
+            newCol[2] = "ethnicity unsure"
         df_with_dummies = df_with_dummies.rename(columns={col: newCol[2]})
 
 
@@ -73,19 +87,17 @@ ethnicConversions = {"afam": "isAfam", "chinese": "isAsian", "korean": "isAsian"
                      "italian": "isWhite", "irish": "isIrish", "jewish": "isJewish",
                      "latinx": "isLatinx"}
 
-# for col in df_with_dummies.columns:
-#     if col in ethnicColumns:
-#         print(col + ": " + str(df_with_dummies[col].sum()))
-        
-#         df_with_dummies = df_with_dummies.
-#         ethnicConversions[col]
-
-# converting ethnicity columns to grouped ethnicity
 for original, new in ethnicConversions.items():
     if new not in df_with_dummies.columns:
         df_with_dummies[new] = 0
-    df_with_dummies[new] = df_with_dummies.apply(lambda row: 1 if row[original] == 1 or row[new] == 1 else 0, axis=1)
-    df_with_dummies = df_with_dummies.drop(columns={original})
+    # df_with_dummies[new] = df_with_dummies.apply(lambda row: 1 if row[original] == 1 or row[new] == 1 else 0, axis=1)
+    # df_with_dummies = df_with_dummies.drop(columns={original})
+
+for i in range(len(df)):
+    ethnicity = df_with_dummies["Ethnicity"]
+    if "/" in ethnicity:
+        continue
+    df_with_dummies.at[i, ethnicConversions[ethnicity]] = 1
 
 # handling multi ethnic people
 for col in df_with_dummies:
@@ -240,6 +252,45 @@ for i in range(len(df_with_dummies)):
 
         # Setting the length of donation detail as number of donations
         df_with_dummies.at[i, "Number of Gives"] = len(donation_details)
-# print(df_with_dummies["Most Recent Give Amount"])
-print(df[df_with_dummies["Average Give Amount"] == 0])
-# print(df_with_dummies.at[190, "Bio Contributions"])
+
+# regex pattern for reasons to give in Giving Summary column
+reason_to_give_pattern = r'reason_to_give: (.*)'
+
+# Goes through each row of "Giving summary"
+for i in range(len(df_with_dummies)):
+    reasons_text = df_with_dummies.iloc[i]["Giving Summary"]
+
+    #applies the regex pattern to look for matches
+    reasons_match = re.search(reason_to_give_pattern, reasons_text)
+    if reasons_match:
+        # separates each reason into an item in a list
+        reasons_list = [item for item in re.split(r',\s*', reasons_match.group(1))]
+
+    # if the reason is one of the columns in df_with_dummies, change it to a 1
+    for reason in reasons_list:
+        if reason in df_with_dummies.columns:
+            df_with_dummies.at[i, reason] = 1
+
+
+# df_with_dummies["New Networth"] = df_with_dummies["Networth"] / 10000
+# df_with_dummies["New Networth"].hist(bins = 30)
+# # plt.xscale('log')
+
+# plt.show()
+
+
+
+
+
+
+
+# print(df_with_dummies[df_with_dummies["Networth"] == 96407])
+# print(len(df_with_dummies[df_with_dummies["isLatinx"] == 1]))
+
+columns_to_keep = ['isAfam', 'isAsian', 'isWhite', 'isIrish', 'isJewish',
+       'isLatinx']
+column_sums = df_with_dummies[columns_to_keep].sum()
+
+column_sums.plot(kind='bar')
+plt.xticks(rotation=45)  # Optional: Rotate the x-axis labels for better readability
+plt.show()
