@@ -2,8 +2,9 @@ import pandas as pd
 import re
 from datetime import datetime
 import matplotlib.pyplot as plt
+import numpy as np
 
-df = pd.read_csv("CFAZ Modeling Data.csv")
+df = pd.read_csv("CforAZ_Data_Analytics\CFAZ Modeling Data.csv")
 
 # get rid of useless irrelevant weak ugly column "VANID"
 df.drop(columns=['VANID'], inplace=True)
@@ -269,7 +270,7 @@ for i in range(len(df_with_dummies)):
         if reason in df_with_dummies.columns:
             df_with_dummies.at[i, reason] = 1
 
-
+# One hot encodes networth
 
 df_with_dummies["Networth 10k-100k"] = 0
 df_with_dummies["Networth 100k-1M"] = 0
@@ -292,10 +293,13 @@ columns_to_keep = ['Networth 10k-100k', 'Networth 100k-1M', 'Networth 1M-10M', '
 column_sums = df_with_dummies[columns_to_keep].sum()
 column_sums.plot(kind='bar')
 
-plt.show()
+# plt.show()
 
+# log transformation on total contributions
+df_with_dummies["Total Contributions"] = df_with_dummies["Total Contributions"].replace(0, 0.01)
+df_with_dummies["Log_Total Contributions"] = np.log(df_with_dummies["Total Contributions"])
 
-
+df_with_dummies.drop(columns=["Total Contributions"], inplace=True)
 
 # print(df_with_dummies[df_with_dummies["Networth"] == 96407])
 # print(len(df_with_dummies[df_with_dummies["isLatinx"] == 1]))
@@ -310,5 +314,5 @@ plt.show()
 
 df_with_dummies = df_with_dummies.drop(['Zip', 'Giving Summary', 'Bio Contributions', 'Networth'], axis=1)
 
-exported_csv_filename = 'processed_CFAZ Modeling Data.csv'
+exported_csv_filename = 'CforAZ_Data_Analytics/processed_CFAZ Modeling Data.csv'
 df_with_dummies.to_csv(exported_csv_filename, index=True)
