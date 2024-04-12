@@ -40,4 +40,50 @@ val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
 class RegressionModel(nn.Module):
     def __init__(self):
         super(RegressionModel, self).__init__()
-        self.layer1
+        self.layer1 = nn.Linear(X_train.shape[1], 128)
+        self.layer2 = nn.Linear(128, 64)
+        self.output = nn.Linear(64, 1)
+
+    def forward(self, x):
+        x = torch.relu(self.layer1(x))
+        x = torch.relu(self.layer2(x))
+        x = self.output(x)
+        return x
+
+model = RegressionModel()
+
+# Set the loss function and optimizer
+criterion = nn.MSELoss()
+optimizer = optim.Adam(model.parameters(), lr=0.001)
+
+# Train the model
+def train_model(num_epochs):
+    for epoch in range(num_epochs):
+        model.train()
+        for data, target in train_loader:
+            optimizer.zero_grad()
+            output = model(data)
+            loss = criterion(output, target)
+            loss.backward()
+            optimizer.step()
+
+        model.eval()
+        with torch.no_grad():
+            val_loss = 0
+            for data, target in val_loader:
+                output = model(data)
+                val_loss += criterion(output, target).item()
+            val_loss /= len(val_loader)
+        print(f'Epoch {epoch+1}, Validation Loss: {val_loss}')
+
+train_model(100)
+
+# Evaluate the model on the validation set
+model.eval()
+with torch.no_grad():
+    final_loss = 0
+    for data, target in val_loader:
+        output = model(data)
+        final_loss += criterion(output, target).item()
+    final_loss /= len(val_loader)
+print("Final validation loss:", final_loss)
