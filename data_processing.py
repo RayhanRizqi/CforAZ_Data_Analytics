@@ -298,7 +298,7 @@ for i in range(len(df_with_dummies)):
 df_with_dummies["Networth"] = np.log(df_with_dummies["Networth"])
 
 # Put a max threshhold on Total Contributions
-df_with_dummies.loc[df_with_dummies["Total Contributions"] > 3300, "Total Contributions"] = 3300
+df_with_dummies.loc[df_with_dummies["Total Contributions"] >= 3300, "Total Contributions"] = 3300
 
 # log transformation on total contributions
 # df_with_dummies["Total Contributions"] = df_with_dummies["Total Contributions"].replace(0, 0.01)
