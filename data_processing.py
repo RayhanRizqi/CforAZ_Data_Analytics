@@ -4,7 +4,7 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 import numpy as np
 
-df = pd.read_csv("CforAZ_Data_Analytics\CFAZ Modeling Data.csv")
+df = pd.read_csv("CFAZ Modeling Data.csv")
 
 # get rid of useless irrelevant weak ugly column "VANID"
 df.drop(columns=['VANID'], inplace=True)
@@ -272,28 +272,33 @@ for i in range(len(df_with_dummies)):
 
 # One hot encodes networth
 
-df_with_dummies["Networth 10k-100k"] = 0
-df_with_dummies["Networth 100k-1M"] = 0
-df_with_dummies["Networth 1M-10M"] = 0
-df_with_dummies["Networth 10M-100M"] = 0
+# df_with_dummies["Networth 10k-100k"] = 0
+# df_with_dummies["Networth 100k-1M"] = 0
+# df_with_dummies["Networth 1M-10M"] = 0
+# df_with_dummies["Networth 10M-100M"] = 0
 
-for i in range(len(df_with_dummies)):
-    networthNum = df_with_dummies.at[i, "Networth"]
-    if 10000 <= networthNum < 100000:
-        df_with_dummies.at[i, "Networth 10k-100k"] = 1
-    if 100000 <= networthNum < 1000000:
-        df_with_dummies.at[i, "Networth 100k-1M"] = 1
-    if 1000000 <= networthNum < 10000000:
-        df_with_dummies.at[i, "Networth 1M-10M"] = 1
-    if 10000000 <= networthNum < 100000000:
-        df_with_dummies.at[i, "Networth 10M-100M"] = 1
+# for i in range(len(df_with_dummies)):
+#     networthNum = df_with_dummies.at[i, "Networth"]
+#     if 10000 <= networthNum < 100000:
+#         df_with_dummies.at[i, "Networth 10k-100k"] = 1
+#     if 100000 <= networthNum < 1000000:
+#         df_with_dummies.at[i, "Networth 100k-1M"] = 1
+#     if 1000000 <= networthNum < 10000000:
+#         df_with_dummies.at[i, "Networth 1M-10M"] = 1
+#     if 10000000 <= networthNum < 100000000:
+#         df_with_dummies.at[i, "Networth 10M-100M"] = 1
 
 
-columns_to_keep = ['Networth 10k-100k', 'Networth 100k-1M', 'Networth 1M-10M', 'Networth 10M-100M']
-column_sums = df_with_dummies[columns_to_keep].sum()
-column_sums.plot(kind='bar')
+# columns_to_keep = ['Networth 10k-100k', 'Networth 100k-1M', 'Networth 1M-10M', 'Networth 10M-100M']
+# column_sums = df_with_dummies[columns_to_keep].sum()
+# column_sums.plot(kind='bar')
 
-# plt.show()
+# Applying Logarithm to Networth column
+            
+df_with_dummies["Networth"] = np.log(df_with_dummies["Networth"])
+
+# Put a max threshhold on Total Contributions
+df_with_dummies.loc[df_with_dummies["Total Contributions"] > 3300, "Total Contributions"] = 3300
 
 # log transformation on total contributions
 df_with_dummies["Total Contributions"] = df_with_dummies["Total Contributions"].replace(0, 0.01)
@@ -312,7 +317,10 @@ df_with_dummies.drop(columns=["Total Contributions"], inplace=True)
 # plt.xticks(rotation=45)  # Optional: Rotate the x-axis labels for better readability
 # plt.show()
 
-df_with_dummies = df_with_dummies.drop(['Zip', 'Giving Summary', 'Bio Contributions', 'Networth'], axis=1)
 
-exported_csv_filename = 'CforAZ_Data_Analytics/processed_CFAZ Modeling Data.csv'
+df_with_dummies = df_with_dummies.drop(['Zip', 'Giving Summary', 'Bio Contributions', 'Max Give', 
+    'Average Give Amount', 'strong envir support', 'house races', 'gives in primaries', 
+    'supports AZ campaigns', 'male', 'isIrish', 'isWhite', 'Ethnicity unsure'], axis=1)
+
+exported_csv_filename = 'processed_CFAZ Modeling Data.csv'
 df_with_dummies.to_csv(exported_csv_filename, index=True)
