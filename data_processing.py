@@ -4,7 +4,7 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 import numpy as np
 
-df = pd.read_csv("CFAZ Modeling Data.csv")
+df = pd.read_csv("CforAZ_Data_Analytics\CFAZ Modeling Data.csv")
 
 # get rid of useless irrelevant weak ugly column "VANID"
 df.drop(columns=['VANID'], inplace=True)
@@ -294,17 +294,17 @@ for i in range(len(df_with_dummies)):
 # column_sums.plot(kind='bar')
 
 # Applying Logarithm to Networth column
-            
+
 df_with_dummies["Networth"] = np.log(df_with_dummies["Networth"])
 
 # Put a max threshhold on Total Contributions
-df_with_dummies.loc[df_with_dummies["Total Contributions"] > 3300, "Total Contributions"] = 3300
+df_with_dummies.loc[df_with_dummies["Total Contributions"] >= 3300, "Total Contributions"] = 3300
 
 # log transformation on total contributions
-df_with_dummies["Total Contributions"] = df_with_dummies["Total Contributions"].replace(0, 0.01)
-df_with_dummies["Log_Total Contributions"] = np.log(df_with_dummies["Total Contributions"])
+# df_with_dummies["Total Contributions"] = df_with_dummies["Total Contributions"].replace(0, 0.01)
+# df_with_dummies["Log_Total Contributions"] = np.log(df_with_dummies["Total Contributions"])
 
-df_with_dummies.drop(columns=["Total Contributions"], inplace=True)
+# df_with_dummies.drop(columns=["Total Contributions"], inplace=True)
 
 # print(df_with_dummies[df_with_dummies["Networth"] == 96407])
 # print(len(df_with_dummies[df_with_dummies["isLatinx"] == 1]))
@@ -318,9 +318,7 @@ df_with_dummies.drop(columns=["Total Contributions"], inplace=True)
 # plt.show()
 
 
-df_with_dummies = df_with_dummies.drop(['Zip', 'Giving Summary', 'Bio Contributions', 'Max Give', 
-    'Average Give Amount', 'strong envir support', 'house races', 'gives in primaries', 
-    'supports AZ campaigns', 'male', 'isIrish', 'isWhite', 'Ethnicity unsure'], axis=1)
+df_with_dummies = df_with_dummies.drop(['Zip', 'Giving Summary', 'Bio Contributions'], axis=1)
 
-exported_csv_filename = 'processed_CFAZ Modeling Data.csv'
+exported_csv_filename = 'CforAZ_Data_Analytics\processed_CFAZ Modeling Data.csv'
 df_with_dummies.to_csv(exported_csv_filename, index=True)
