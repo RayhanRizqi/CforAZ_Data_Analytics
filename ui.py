@@ -3,6 +3,34 @@ import tkinter as tk
 from tkinter import filedialog, ttk
 import pandas as pd
 
+import torch
+import torch.nn as nn
+
+class ClassificationModel(nn.Module):
+    def __init__(self):
+        super(ClassificationModel, self).__init__()
+        self.layer1 = nn.Linear(X_train.shape[1], 128)
+        self.layer2 = nn.Linear(128, 256)
+        self.dropout = nn.Dropout(0.2)
+        self.layer3 = nn.Linear(256, 64)
+        self.output = nn.Linear(64, 4)  # Output layer for 5 classes
+
+    def forward(self, x):
+        x = torch.relu(self.layer1(x))
+        x = torch.relu(self.layer2(x))
+        x = self.dropout(x)
+        x = torch.relu(self.layer3(x))
+        x = self.output(x)
+        return x
+
+model = ClassificationModel()
+
+# Loads model state dictionary
+model_state = torch.load('model_weights.model')
+
+# Applies the loaded state dictionary to the model
+model.load_state_dict(model_state)
+
 app = ctk.CTk()
 app.title("DonorAI")
 

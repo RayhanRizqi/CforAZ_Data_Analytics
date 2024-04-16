@@ -98,33 +98,39 @@ with torch.no_grad():
             correct = 'Correct' if t == p else 'Incorrect'
             print(f"Predicted: {predicted_class}, Actual: {actual_class}, Result: {correct}")
 
-# Evaluate and print confusion matrix
-model.eval()
-all_preds = []
-all_targets = []
-with torch.no_grad():
-    for data, target in val_loader:
-        output = model(data)
-        _, predicted = torch.max(output, 1)
-        all_preds.extend(predicted.numpy())
-        all_targets.extend(target.numpy())
+# Gets the state of the model
+model_state = model.state_dict()
 
-# Assuming 'all_preds' and 'all_targets' are the lists of predictions and true labels from your validation set
-f1_scores_per_class = f1_score(all_targets, all_preds, labels=[0, 1, 2, 3], average=None)
-f1_score_average = f1_score(all_targets, all_preds, average='weighted')
+# Saves the model state to model_weights.model
+torch.save(model_state, 'CforAZ_Data_Analytics/model_weights.model')
 
-print(f"F1 score per class: {f1_scores_per_class}")
-print(f"Average F1 score: {f1_score_average}")
+# # Evaluate and print confusion matrix
+# model.eval()
+# all_preds = []
+# all_targets = []
+# with torch.no_grad():
+#     for data, target in val_loader:
+#         output = model(data)
+#         _, predicted = torch.max(output, 1)
+#         all_preds.extend(predicted.numpy())
+#         all_targets.extend(target.numpy())
 
-# Calculate confusion matrix
-cm = confusion_matrix(all_targets, all_preds, labels=[0, 1, 2, 3])
-print("Confusion Matrix:")
-print(cm)
+# # Assuming 'all_preds' and 'all_targets' are the lists of predictions and true labels from your validation set
+# f1_scores_per_class = f1_score(all_targets, all_preds, labels=[0, 1, 2, 3], average=None)
+# f1_score_average = f1_score(all_targets, all_preds, average='weighted')
 
-# Plot confusion matrix
-plt.figure(figsize=(10, 7))
-sns.heatmap(cm, annot=True, fmt="d", cmap='Blues', xticklabels=labels, yticklabels=labels)
-plt.xlabel('Predicted')
-plt.ylabel('Actual')
-plt.title('Confusion Matrix')
-plt.show()
+# print(f"F1 score per class: {f1_scores_per_class}")
+# print(f"Average F1 score: {f1_score_average}")
+
+# # Calculate confusion matrix
+# cm = confusion_matrix(all_targets, all_preds, labels=[0, 1, 2, 3])
+# print("Confusion Matrix:")
+# print(cm)
+
+# # Plot confusion matrix
+# plt.figure(figsize=(10, 7))
+# sns.heatmap(cm, annot=True, fmt="d", cmap='Blues', xticklabels=labels, yticklabels=labels)
+# plt.xlabel('Predicted')
+# plt.ylabel('Actual')
+# plt.title('Confusion Matrix')
+# plt.show()
