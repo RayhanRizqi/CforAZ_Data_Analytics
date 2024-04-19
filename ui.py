@@ -28,7 +28,7 @@ class ClassificationModel(nn.Module):
 
 # Load model and set it to evaluation mode
 model = ClassificationModel()
-model_state = torch.load('CforAZ_Data_Analytics\model_weights.model')
+model_state = torch.load('model_weights.model')
 model.load_state_dict(model_state)
 model.eval()
 
@@ -49,20 +49,22 @@ def open_file_dialog(event=None):
         display_file(file_path)
 
 def process_data(df):
+    preprocessed_df = df.copy()
+
     # get rid of useless irrelevant weak ugly column "VANID"
-    df.drop(columns=['VANID'], inplace=True)
-    df.drop(columns=['Employer'], inplace=True)
-    df.drop(columns=['Occupation'], inplace=True)
-    df.drop(columns=['City'], inplace=True)
-    df.drop(columns=['State'], inplace=True)
-    df.drop(columns=['Giving History'], inplace=True)
+    preprocessed_df.drop(columns=['VANID'], inplace=True)
+    preprocessed_df.drop(columns=['Employer'], inplace=True)
+    preprocessed_df.drop(columns=['Occupation'], inplace=True)
+    preprocessed_df.drop(columns=['City'], inplace=True)
+    preprocessed_df.drop(columns=['State'], inplace=True)
+    preprocessed_df.drop(columns=['Giving History'], inplace=True)
 
     # add columns about previous gives
-    df['Max Give'] = 0
-    df['Months Since Last Donation'] = 0
-    df['Most Recent Give Amount'] = 0
-    df['Number of Gives'] = 0
-    df['Average Give Amount'] = 0
+    preprocessed_df['Max Give'] = 0
+    preprocessed_df['Months Since Last Donation'] = 0
+    preprocessed_df['Most Recent Give Amount'] = 0
+    preprocessed_df['Number of Gives'] = 0
+    preprocessed_df['Average Give Amount'] = 0
 
     # Columns for reasons for Conor to give in list
     reason_to_give = [
@@ -73,7 +75,7 @@ def process_data(df):
 
     # Convert reasons_to_give into columns in the df
     for item in reason_to_give:
-        df[item] = 0
+        preprocessed_df[item] = 0
 
     # Adjust the process_string_corrected function to specifically extract Gender, Ethnicity, and Networth
     def extract_bio_details(bio_string):
@@ -93,14 +95,14 @@ def process_data(df):
         return gender, ethnicity, networth
 
     # Apply the extract_bio_details function to the "Bio" column and create new columns
-    df[['Gender', 'Ethnicity', 'Networth']] = df.apply(lambda row: pd.Series(extract_bio_details(row['Bio'])), axis=1)
-    df.drop(columns=['Bio'], inplace=True)
+    preprocessed_df[['Gender', 'Ethnicity', 'Networth']] = preprocessed_df.apply(lambda row: pd.Series(extract_bio_details(row['Bio'])), axis=1)
+    preprocessed_df.drop(columns=['Bio'], inplace=True)
 
     # Apply get_dummies to "Gender" and "Ethnicity" columns to create one-hot encoded columns
-    gender_dummies = pd.get_dummies(df['Gender'], prefix='Gender')
+    gender_dummies = pd.get_dummies(preprocessed_df['Gender'], prefix='Gender')
 
     # Concatenate these new one-hot encoded columns with the original DataFrame
-    df_with_dummies = pd.concat([df, gender_dummies], axis=1)
+    df_with_dummies = pd.concat([preprocessed_df, gender_dummies], axis=1)
 
     # Prettiy Gender columns
     for col in df_with_dummies.columns:
