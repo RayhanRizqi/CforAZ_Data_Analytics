@@ -13,7 +13,7 @@ import seaborn as sns
 from sklearn.metrics import f1_score
 
 # Load and preprocess data
-data = pd.read_csv("CforAZ_Data_Analytics\processed_CFAZ Modeling Data.csv")
+data = pd.read_csv("processed_CFAZ Modeling Data.csv")
 data_cleaned = data.drop(columns=['Unnamed: 0'])
 imputer = SimpleImputer(strategy='mean')
 data_imputed = pd.DataFrame(imputer.fit_transform(data_cleaned), columns=data_cleaned.columns)
@@ -35,6 +35,7 @@ y_tensor = torch.tensor(y_binned, dtype=torch.long)
 
 # Split the data into training and validation sets
 X_train, X_val, y_train, y_val = train_test_split(X_tensor, y_tensor, test_size=0.2, random_state=42)
+print(X_train.shape[1])
 train_dataset = TensorDataset(X_train, y_train)
 val_dataset = TensorDataset(X_val, y_val)
 

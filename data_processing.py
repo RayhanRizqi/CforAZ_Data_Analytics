@@ -53,16 +53,11 @@ def extract_bio_details(bio_string):
 df[['Gender', 'Ethnicity', 'Networth']] = df.apply(lambda row: pd.Series(extract_bio_details(row['Bio'])), axis=1)
 df.drop(columns=['Bio'], inplace=True)
 
-# Display the modified DataFrame columns to verify the new structure
-# print(df.columns)
-
 # Apply get_dummies to "Gender" and "Ethnicity" columns to create one-hot encoded columns
 gender_dummies = pd.get_dummies(df['Gender'], prefix='Gender')
-# ethnicity_dummies = pd.get_dummies(df['Ethnicity'], prefix='Ethnicity')
 
 # Concatenate these new one-hot encoded columns with the original DataFrame
 df_with_dummies = pd.concat([df, gender_dummies], axis=1)
-# df_with_dummies = pd.concat([df_with_dummies, ethnicity_dummies], axis=1)
 
 # Prettiy Gender columns
 for col in df_with_dummies.columns:
@@ -109,14 +104,6 @@ for i in range(len(df_with_dummies)):
 df_with_dummies.drop(columns=['Gender'], inplace=True)
 df_with_dummies.drop(columns=['Ethnicity'], inplace=True)
 
-# Display the modified DataFrame columns to verify the new structure with dummies
-# print(df_with_dummies.columns)
-# print(df_with_dummies.head())
-
-# 
-# print(df_with_dummies["Bio Contributions"])
-count = 0
-
 for i in range(len(df_with_dummies)):
     wordString = df_with_dummies.iloc[i]["Bio Contributions"].split("   ")
     
@@ -134,8 +121,6 @@ for i in range(len(df_with_dummies)):
         # gets rid of leading & trailing white spaces & removes empty strings form lists, cuz for some reason they have empty strings
         donations = [item for item in [item.strip() for item in donations] if item]
 
-        
-
         # get the list of all the numbers in the middle of the donation, then get the max of all of them
         maxGive = int(max([float(s.split(' - ')[1]) for s in donations]))
 
@@ -146,7 +131,6 @@ for i in range(len(df_with_dummies)):
 
         # Set average give in df at column "Average Give Amount"
         df_with_dummies.at[i, "Average Give Amount"] = sum(donation_amounts) / len(donation_amounts)
-
 
         # get the amount of the latest give
         most_recent_dono_amount = int(float(donations[len(donations)-1].split(' - ')[1]))
@@ -167,7 +151,6 @@ for i in range(len(df_with_dummies)):
         months_since_donation = (current_date.year - most_recent_dono.year) * 12 + (current_date.month - most_recent_dono.month)
 
         df_with_dummies.at[i, "Months Since Last Donation"] = months_since_donation
-        # print(donations)
 
         # setting the amount of donations in df under column "Number of Gives"
         df_with_dummies.at[i, "Number of Gives"] = len(donations)
@@ -270,53 +253,12 @@ for i in range(len(df_with_dummies)):
         if reason in df_with_dummies.columns:
             df_with_dummies.at[i, reason] = 1
 
-# One hot encodes networth
-
-# df_with_dummies["Networth 10k-100k"] = 0
-# df_with_dummies["Networth 100k-1M"] = 0
-# df_with_dummies["Networth 1M-10M"] = 0
-# df_with_dummies["Networth 10M-100M"] = 0
-
-# for i in range(len(df_with_dummies)):
-#     networthNum = df_with_dummies.at[i, "Networth"]
-#     if 10000 <= networthNum < 100000:
-#         df_with_dummies.at[i, "Networth 10k-100k"] = 1
-#     if 100000 <= networthNum < 1000000:
-#         df_with_dummies.at[i, "Networth 100k-1M"] = 1
-#     if 1000000 <= networthNum < 10000000:
-#         df_with_dummies.at[i, "Networth 1M-10M"] = 1
-#     if 10000000 <= networthNum < 100000000:
-#         df_with_dummies.at[i, "Networth 10M-100M"] = 1
-
-
-# columns_to_keep = ['Networth 10k-100k', 'Networth 100k-1M', 'Networth 1M-10M', 'Networth 10M-100M']
-# column_sums = df_with_dummies[columns_to_keep].sum()
-# column_sums.plot(kind='bar')
-
 # Applying Logarithm to Networth column
 
 df_with_dummies["Networth"] = np.log(df_with_dummies["Networth"])
 
 # Put a max threshhold on Total Contributions
 df_with_dummies.loc[df_with_dummies["Total Contributions"] >= 3300, "Total Contributions"] = 3300
-
-# log transformation on total contributions
-# df_with_dummies["Total Contributions"] = df_with_dummies["Total Contributions"].replace(0, 0.01)
-# df_with_dummies["Log_Total Contributions"] = np.log(df_with_dummies["Total Contributions"])
-
-# df_with_dummies.drop(columns=["Total Contributions"], inplace=True)
-
-# print(df_with_dummies[df_with_dummies["Networth"] == 96407])
-# print(len(df_with_dummies[df_with_dummies["isLatinx"] == 1]))
-
-# columns_to_keep = ['isAfam', 'isAsian', 'isWhite', 'isIrish', 'isJewish',
-#        'isLatinx', 'Ethnicity unsure']
-# column_sums = df_with_dummies[columns_to_keep].sum()
-
-# column_sums.plot(kind='bar')
-# plt.xticks(rotation=45)  # Optional: Rotate the x-axis labels for better readability
-# plt.show()
-
 
 df_with_dummies = df_with_dummies.drop(['Zip', 'Giving Summary', 'Bio Contributions'], axis=1)
 
